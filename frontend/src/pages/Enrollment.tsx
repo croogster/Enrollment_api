@@ -117,16 +117,47 @@ const EnrollmentPage: React.FC = () => {
       }));
 
       const result = await bulkEnroll(enrollmentList);
+      console.log('Bulk enroll result:', result); // Debug log
+      
+      // Always refresh data
       await fetchData();
+      
+      // Clear form
       setBulkItems([]);
       setBulkForm({ student_id: "", subject_id: "", section_id: "" });
       setShowBulkForm(false);
-      setSuccessMessage(
-        `Bulk enrollment completed: ${result.successful} successful, ${result.failed} failed`
-      );
-      setTimeout(() => setSuccessMessage(null), 5000);
+      setError(null); // Clear any previous errors
+      
+      // Show appropriate message
+      const successful = result.summary?.successful || 0;
+      const failed = result.summary?.failed || 0;
+      
+      if (successful > 0 && failed === 0) {
+        setSuccessMessage(`Bulk enrollment completed: ${successful} successful`);
+      } else if (successful > 0 && failed > 0) {
+        setSuccessMessage(`Bulk enrollment completed: ${successful} successful, ${failed} failed`);
+        // Show first error as warning
+        if (result.failed && result.failed.length > 0) {
+          const firstError = result.failed[0].error || 'Unknown error';
+          setError(`Some enrollments failed: ${firstError}`);
+        }
+      } else if (failed > 0) {
+        // All failed
+        if (result.failed && result.failed.length > 0) {
+          const firstError = result.failed[0].error || 'Unknown error';
+          setError(`Bulk enrollment failed: ${firstError}`);
+        } else {
+          setError("Bulk enrollment failed");
+        }
+      }
+      
+      setTimeout(() => {
+        setSuccessMessage(null);
+        setError(null);
+      }, 5000);
     } catch (err: any) {
-      setError(err.response?.data?.detail || "Failed to bulk enroll students");
+      console.error('Bulk enroll error:', err);
+      setError(err.response?.data?.detail || err.response?.data?.error || "Failed to bulk enroll students");
     }
   };
 

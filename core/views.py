@@ -4,7 +4,6 @@ from django.db.models import Sum, Count, Q
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, csrf_exempt
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 
@@ -161,7 +160,6 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
             )
 
     @action(detail=False, methods=['post'])
-    @csrf_exempt
     def bulk_enroll(self, request):
         """
         Bulk enroll multiple students in subjects.
