@@ -1,9 +1,10 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
-from .views import login, logout, me, student_users, student_user_detail, reset_student_password, register_student, register_admin
+from .views import login, logout, me, student_users, student_user_detail, reset_student_password, register_student, register_admin, activate_account
 
 urlpatterns = [
     path('auth/register/', register_student, name='register-student'),
+    path('auth/activate/', activate_account, name='activate-account'),
     path('auth/register-admin/', register_admin, name='register-admin'),
     path('auth/login/', login, name='login'),
     path('auth/logout/', logout, name='logout'),

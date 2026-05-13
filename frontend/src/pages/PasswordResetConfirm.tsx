@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useLocation, Link } from "react-router-dom";
 import { Lock, CheckCircle, AlertCircle, Loader } from "lucide-react";
 import { confirmPasswordReset, login as apiLogin, getStoredUser } from "../api";
 
 const PasswordResetConfirm: React.FC = () => {
-  const { uid, token } = useParams<{ uid: string; token: string }>();
+  const { uid: paramUid, token: paramToken } = useParams<{ uid: string; token: string }>();
+  const location = useLocation();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,6 +20,10 @@ const PasswordResetConfirm: React.FC = () => {
       setError("Passwords do not match.");
       return;
     }
+
+    const searchParams = new URLSearchParams(location.search);
+    const uid = paramUid || searchParams.get("uid") || undefined;
+    const token = paramToken || searchParams.get("token") || undefined;
 
     if (!uid || !token) {
       setError("Invalid reset link.");

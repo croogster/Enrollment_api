@@ -27,8 +27,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
-
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '172.22.36.244']
 
 # Application definition
 
@@ -181,8 +180,8 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'USER_CREATE_PASSWORD_RETYPE': True,
     'SEND_ACTIVATION_EMAIL': True,
-    'ACTIVATION_URL': 'http://localhost:3000/activate/{uid}/{token}',
-    'PASSWORD_RESET_CONFIRM_URL': 'http://localhost:3000/password-reset/confirm/{uid}/{token}',
+    'ACTIVATION_URL': 'http://localhost:3000/activate?uid={uid}&token={token}',
+    'PASSWORD_RESET_CONFIRM_URL': 'http://localhost:3000/password-reset/confirm?uid={uid}&token={token}',
     'SERIALIZERS': {
         'user_create': 'user.serializers.UserCreateSerializer',
         'user': 'user.serializers.UserSerializer',

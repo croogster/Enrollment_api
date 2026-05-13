@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.utils.http import urlsafe_base64_encode
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
@@ -247,7 +247,7 @@ def register_student(request):
     
     activation_uid = force_str(urlsafe_base64_encode(force_bytes(user.pk)))
     token = default_token_generator.make_token(user)
-    activation_link = f"{settings.DJOSER['ACTIVATION_URL'].replace('{uid}', activation_uid).replace('{token}', token)}"
+    activation_link = settings.DJOSER['ACTIVATION_URL'].replace('{uid}', activation_uid).replace('{token}', token)
     
     email_subject = 'Activate Your Student Account'
     email_body = f"""
@@ -283,6 +283,49 @@ def register_student(request):
 @csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
+def activate_account(request):
+    uid = request.data.get('uid', '')
+    token = request.data.get('token', '')
+
+    if not uid or not token:
+        return Response(
+            {'detail': 'Invalid activation link.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        pk = force_str(urlsafe_base64_decode(uid))
+        user = User.objects.get(pk=pk)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        return Response(
+            {'uid': ['Invalid user id or user doesn\'t exist.']},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if not default_token_generator.check_token(user, token):
+        return Response(
+            {'token': ['Invalid token for given user.']},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if user.is_active:
+        return Response(
+            {'detail': 'This account has already been activated.'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    user.is_active = True
+    user.save()
+
+    return Response(
+        {'message': 'Account activated successfully!'},
+        status=status.HTTP_200_OK
+    )
+
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def register_admin(request):
     serializer = AdminRegistrationSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
@@ -307,7 +350,7 @@ def register_admin(request):
     
     activation_uid = force_str(urlsafe_base64_encode(force_bytes(user.pk)))
     token = default_token_generator.make_token(user)
-    activation_link = f"{settings.DJOSER['ACTIVATION_URL'].replace('{uid}', activation_uid).replace('{token}', token)}"
+    activation_link = settings.DJOSER['ACTIVATION_URL'].replace('{uid}', activation_uid).replace('{token}', token)
     
     email_subject = 'Activate Your Admin Account'
     email_body = f"""

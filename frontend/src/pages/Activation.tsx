@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import { Loader, CheckCircle, XCircle, Mail } from "lucide-react";
 import { activateAccount, resendActivation } from "../api";
 
 const Activation: React.FC = () => {
-  const { uid, token } = useParams<{ uid: string; token: string }>();
+  const { uid: paramUid, token: paramToken } = useParams<{ uid: string; token: string }>();
+  const location = useLocation();
   const navigate = useNavigate();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
@@ -19,6 +20,10 @@ const Activation: React.FC = () => {
     activated.current = true;
 
     const activate = async () => {
+      const searchParams = new URLSearchParams(location.search);
+      const uid = paramUid || searchParams.get("uid") || undefined;
+      const token = paramToken || searchParams.get("token") || undefined;
+
       if (!uid || !token) {
         setStatus("error");
         setMessage("Invalid activation link.");
@@ -46,7 +51,7 @@ const Activation: React.FC = () => {
     };
 
     activate();
-  }, [uid, token, navigate]);
+  }, [paramUid, paramToken, location.search, navigate]);
 
   const handleResend = async (e: React.FormEvent) => {
     e.preventDefault();

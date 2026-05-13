@@ -16,7 +16,7 @@ import {
   AdminRegistrationData,
 } from "./type";
 
-const API: AxiosInstance = axios.create({ baseURL: "http://127.0.0.1:8000/api/" });
+const API: AxiosInstance = axios.create({ baseURL: "http://172.22.36.244:8000/api/" });
 
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token");
@@ -131,12 +131,25 @@ export const registerAdmin = async (data: AdminRegistrationData): Promise<{ mess
 };
 
 export const activateAccount = async (uid: string, token: string): Promise<{ message: string }> => {
-  const res = await API.post("auth/users/activation/", { uid, token });
+  const formData = new URLSearchParams();
+  formData.append('uid', uid);
+  formData.append('token', token);
+  const res = await API.post("auth/activate/", formData, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+  });
   return res.data;
 };
 
 export const resendActivation = async (email: string): Promise<{ message: string }> => {
-  const res = await API.post("auth/users/resend_activation/", { email });
+  const formData = new URLSearchParams();
+  formData.append('email', email);
+  const res = await API.post("auth/users/resend_activation/", formData, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+  });
   return res.data;
 };
 
@@ -146,7 +159,16 @@ export const requestPasswordReset = async (email: string): Promise<{ message: st
 };
 
 export const confirmPasswordReset = async (uid: string, token: string, new_password: string, re_new_password: string): Promise<void> => {
-  await API.post("auth/users/reset_password_confirm/", { uid, token, new_password, re_new_password });
+  const formData = new URLSearchParams();
+  formData.append('uid', uid);
+  formData.append('token', token);
+  formData.append('new_password', new_password);
+  formData.append('re_new_password', re_new_password);
+  await API.post("auth/users/reset_password_confirm/", formData, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+  });
 };
 
 export const isAuthenticated = (): boolean => {

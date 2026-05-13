@@ -15,8 +15,10 @@ const App: React.FC = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/activation/:uid/:token" element={<Activation />} />
+      <Route path="/activate" element={<Activation />} />
       <Route path="/activate/:uid/:token" element={<Activation />} />
       <Route path="/password-reset" element={<PasswordReset />} />
+      <Route path="/password-reset/confirm" element={<PasswordResetConfirm />} />
       <Route path="/password-reset/confirm/:uid/:token" element={<PasswordResetConfirm />} />
       <Route path="/admin/*" element={
         <ProtectedRoute requiredRole="admin">
