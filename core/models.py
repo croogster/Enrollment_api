@@ -84,21 +84,27 @@ class Section(models.Model):
 
     class Meta:
         unique_together = ('subject', 'name')
+        indexes = [
+            models.Index(fields=['subject', 'schedule']),
+        ]
 
     def __str__(self):
         return f"{self.subject.code} - {self.name}"
 
-    def get_current_enrollment_count(self):
+    def get_current_enrollment_count(self, exclude_pk=None):
         """Get number of currently enrolled students in this section"""
-        return self.enrollments.filter(status='enrolled').count()
+        qs = self.enrollments.filter(status='enrolled')
+        if exclude_pk is not None:
+            qs = qs.exclude(pk=exclude_pk)
+        return qs.count()
 
-    def has_available_capacity(self):
+    def has_available_capacity(self, exclude_pk=None):
         """Check if section has available capacity"""
-        return self.get_current_enrollment_count() < self.max_capacity
+        return self.get_current_enrollment_count(exclude_pk=exclude_pk) < self.max_capacity
 
-    def get_available_capacity(self):
+    def get_available_capacity(self, exclude_pk=None):
         """Get remaining capacity"""
-        return self.max_capacity - self.get_current_enrollment_count()
+        return self.max_capacity - self.get_current_enrollment_count(exclude_pk=exclude_pk)
 
 
 class Enrollment(models.Model):
@@ -116,10 +122,10 @@ class Enrollment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('student', 'subject')  # Prevents duplicate enrollment for same subject
         indexes = [
             models.Index(fields=['student', 'status']),
             models.Index(fields=['section', 'status']),
+            models.Index(fields=['student', 'subject']),
         ]
 
     def __str__(self):
@@ -127,24 +133,25 @@ class Enrollment(models.Model):
 
     def clean(self):
         """Validate enrollment constraints"""
-        # Check if student already enrolled in this subject
-        if Enrollment.objects.filter(
-            student=self.student,
-            subject=self.subject,
-            status='enrolled'
-        ).exclude(pk=self.pk).exists():
-            raise ValidationError(
-                f"Student {self.student.name} is already enrolled in {self.subject.code}"
-            )
+        # Check if student already enrolled in this subject (excluding self)
+        if self.status == 'enrolled':
+            if Enrollment.objects.filter(
+                student=self.student,
+                subject=self.subject,
+                status='enrolled'
+            ).exclude(pk=self.pk).exists():
+                raise ValidationError(
+                    f"Student {self.student.name} is already enrolled in {self.subject.code}"
+                )
 
-        # Check if section has capacity
-        if not self.section.has_available_capacity():
-            raise ValidationError(
-                f"Section {self.section.name} has reached maximum capacity"
-            )
+            # Check if section has capacity (exclude current enrollment if updating)
+            if not self.section.has_available_capacity(exclude_pk=self.pk):
+                raise ValidationError(
+                    f"Section {self.section.name} has reached maximum capacity"
+                )
 
         # Check if section belongs to the subject
-        if self.section.subject != self.subject:
+        if self.section_id and self.subject_id and self.section.subject_id != self.subject_id:
             raise ValidationError(
                 f"Section {self.section.name} does not belong to subject {self.subject.code}"
             )

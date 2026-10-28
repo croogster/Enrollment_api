@@ -46,7 +46,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
-    admin_image = models.ImageField(upload_to='admin_images/', blank=True, null=True)
+    admin_image = models.FileField(upload_to='admin_images/', blank=True, null=True)
 
     date_joined = models.DateTimeField(auto_now_add=True)
 

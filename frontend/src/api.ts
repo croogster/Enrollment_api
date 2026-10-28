@@ -16,7 +16,7 @@ import {
   AdminRegistrationData,
 } from "./type";
 
-const API: AxiosInstance = axios.create({ baseURL: "http://172.22.36.244:8000/api/" });
+const API: AxiosInstance = axios.create({ baseURL: "http://127.0.0.1:8000/api/" });
 
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token");

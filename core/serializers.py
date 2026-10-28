@@ -69,7 +69,12 @@ class EnrollmentSerializer(serializers.ModelSerializer):
         # If section_id is provided, use it; otherwise, auto-assign
         if 'section_id_write' not in validated_data or not validated_data.get('section_id_write'):
             # Auto-assign to section with available capacity
-            subject = Subject.objects.get(id=validated_data['subject_id'])
+            subject_id = validated_data.get('subject_id') or validated_data.get('subject')
+            if hasattr(subject_id, 'id'):
+                subject = subject_id
+                subject_id = subject.id
+            else:
+                subject = Subject.objects.get(id=subject_id)
             
             # Try to find a section with available capacity
             available_section = next(
@@ -83,7 +88,18 @@ class EnrollmentSerializer(serializers.ModelSerializer):
                 )
             validated_data['section'] = available_section
         else:
-            validated_data['section_id'] = validated_data.pop('section_id_write')
+            section_id = validated_data.pop('section_id_write')
+            validated_data['section_id'] = section_id
+            # Basic validation
+            try:
+                section = Section.objects.select_related('subject').get(id=section_id)
+                subject_id = validated_data.get('subject_id') or (validated_data.get('subject').id if hasattr(validated_data.get('subject'), 'id') else None)
+                if subject_id and section.subject_id != subject_id:
+                    raise serializers.ValidationError(
+                        f"Section {section.name} does not belong to subject"
+                    )
+            except Section.DoesNotExist:
+                raise serializers.ValidationError("Invalid section")
 
         return super().create(validated_data)
 

@@ -147,9 +147,9 @@ class Command(BaseCommand):
                 enrollment_count += 1
                 self.stdout.write(f"  {student.name} -> {subject.code} (Section {section.name})")
 
-        self.stdout.write(self.style.SUCCESS(f'\n✓ Successfully created {enrollment_count} enrollments'))
+        self.stdout.write(self.style.SUCCESS(f'\nSuccessfully created {enrollment_count} enrollments'))
         self.stdout.write(self.style.SUCCESS('\n=== Sample Data Statistics ==='))
-        self.stdout.write(f'✓ {Subject.objects.count()} subjects created')
-        self.stdout.write(f'✓ {Section.objects.count()} sections created')
-        self.stdout.write(f'✓ {Student.objects.count()} students created')
-        self.stdout.write(f'✓ {Enrollment.objects.count()} enrollments created')
+        self.stdout.write(f'{Subject.objects.count()} subjects created')
+        self.stdout.write(f'{Section.objects.count()} sections created')
+        self.stdout.write(f'{Student.objects.count()} students created')
+        self.stdout.write(f'{Enrollment.objects.count()} enrollments created')

@@ -181,9 +181,14 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
         queryset = Enrollment.objects.select_related('student', 'subject', 'section')
         
         if hasattr(self.request, 'user') and self.request.user.is_authenticated:
-            if self.request.user.is_student_role and not self.request.user.is_admin_role:
-                if self.request.user.student:
-                    queryset = queryset.filter(student=self.request.user.student)
+            if getattr(self.request.user, 'is_admin_role', False) or getattr(self.request.user, 'is_staff', False):
+                return queryset
+            if getattr(self.request.user, 'is_student_role', False) or self.request.user.role == 'student':
+                if getattr(self.request.user, 'student_id', None):
+                    return queryset.filter(student_id=self.request.user.student_id)
+                if getattr(self.request.user, 'student', None):
+                    return queryset.filter(student=self.request.user.student)
+                return queryset.none()
         
         return queryset
 
@@ -193,21 +198,28 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
         if not request.user.is_authenticated:
             return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
         
-        if not request.user.student:
+        student = getattr(request.user, 'student', None)
+        if not student and getattr(request.user, 'student_id', None):
+            try:
+                from .models import Student
+                student = Student.objects.get(pk=request.user.student_id)
+            except Exception:
+                student = None
+        if not student:
             return Response(
                 {'error': 'No linked student account. Please contact administrator.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
         enrollments = Enrollment.objects.filter(
-            student=request.user.student,
+            student=student,
             status='enrolled'
         ).select_related('subject', 'section')
         
         data = {
-            'student': StudentSerializer(request.user.student).data,
+            'student': StudentSerializer(student).data,
             'enrollments': EnrollmentSerializer(enrollments, many=True).data,
-            'total_units': request.user.student.get_total_units(),
+            'total_units': student.get_total_units(),
             'total_subjects': enrollments.count()
         }
         return Response(data)
